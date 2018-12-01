@@ -1,0 +1,33 @@
+﻿<Window x:Class="Monitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Monitor"
+        mc:Ignorable="d"
+        Title="Monitor" Height="450" Width="800">
+    <Grid>
+		
+		<ListView ItemsSource="{Binding ProcessList}" SelectedItem="{Binding SelectedProcess}">
+			<ListView.View>
+				<GridView x:Name="ProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
+					<GridViewColumn Header="PID" Width="70" DisplayMemberBinding="{Binding Path=Id}" />
+					<GridViewColumn Header="Process" Width="300" DisplayMemberBinding="{Binding Path=ProcessName}" />
+					<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
+					<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
+					<GridViewColumn Header="Networking" Width="70" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
+					<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=BasePriority}" />
+					<GridViewColumn Width="70" >
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<Button Content="End" Click="EndClick" Tag="{Binding Path=Id}" />
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+				</GridView>
+				
+			</ListView.View>
+		</ListView>
+
+	</Grid>
+</Window>
