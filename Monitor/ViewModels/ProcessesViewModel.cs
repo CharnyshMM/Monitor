@@ -90,33 +90,32 @@ namespace Monitor.ViewModels
 
         
         public void Update()
-        {
-
-            //_processDictionary = new Dictionary<long, Process>();
-            //var update = Process.GetProcesses();
-            //foreach (var p in update)
-            //{
-            //    processes.Add(p.Id, p);
-            //}
+        {       
             var update = Process.GetProcesses();
 
             if (_processObservableCollection is null)
             {
-                _processObservableCollection = new ObservableCollection<Process>(update);
-                _processObservableCollection.OrderBy(p => p.ProcessName);
-                OnPropertyChanged("ProcessList");
+                _processDictionary = new Dictionary<long, Process>();
+                
+                foreach (var p in update)
+                {
+                    _processDictionary.Add(p.Id, p);
+                }
+                _processObservableCollection = new ObservableCollection<Process>(_processDictionary.Values);
                 return;
             }
 
             foreach (var newProcessRecord in update)
             {
-                if (_processObservableCollection.Contains(newProcessRecord, new ProcessPIDComparer()))
+                if (_processDictionary.ContainsKey(newProcessRecord.Id))
                 {
-                    var oldProcessRecord = _processObservableCollection.Single(p => p.Id == newProcessRecord.Id);
-                    int index = _processObservableCollection.IndexOf(oldProcessRecord);
+                    var oldProcessRecord = _processDictionary[newProcessRecord.Id];
+                    
                     if (!CompareProcesses(oldProcessRecord, newProcessRecord))
                     {
-                        App.Current.Dispatcher.Invoke(delegate
+                        oldProcessRecord = _processObservableCollection.Single(p => p.Id == oldProcessRecord.Id);
+                        int index = _processObservableCollection.IndexOf(oldProcessRecord);
+                        System.Windows.Application.Current.Dispatcher.Invoke(delegate
                         {
                             _processObservableCollection[index] = newProcessRecord;
                         });
@@ -124,7 +123,7 @@ namespace Monitor.ViewModels
                 }
                 else
                 {
-                    App.Current.Dispatcher.Invoke(delegate
+                    System.Windows.Application.Current.Dispatcher.Invoke(delegate
                     {
                         _processObservableCollection.Add(newProcessRecord);
                     });
@@ -139,8 +138,7 @@ namespace Monitor.ViewModels
 
         public void OnPropertyChanged([CallerMemberName]string prop = "")
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
     }
 }
