@@ -17,6 +17,7 @@ using System.Timers;
 using System.Diagnostics;
 using System.IO;
 using Monitor.Utilities;
+using System.ComponentModel;
 
 namespace Monitor
 {
@@ -159,6 +160,55 @@ namespace Monitor
         {
             var sets = new ChildWindow();
             sets.ShowDialog();
+        }
+
+        private void trySetPriority(int pid, ProcessPriorityClass priorityClass)
+        {
+            try
+            {
+                Process.GetProcessById(pid).PriorityClass = priorityClass;
+            }
+            catch (InvalidOperationException e)
+            {
+                MessageBox.Show("Can't set the priority of this process. It might be ended soon.");
+            }
+            catch (Win32Exception e)
+            {
+                MessageBox.Show("Can't set the priority of this process");
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Unexpected error... Can't set the priority");
+            }
+        }
+
+        private void ComboBox_DropDownClosed(object sender, EventArgs e)
+        {
+            var comboBox = sender as ComboBox;
+            var comboBoxItem = comboBox.SelectedItem as ComboBoxItem;
+            int pid = (int)comboBox.Tag;
+            switch (comboBoxItem.Tag)
+            {
+                case "4":
+                    trySetPriority(pid, ProcessPriorityClass.Idle);
+                    break;
+                case "6":
+                    trySetPriority(pid, ProcessPriorityClass.BelowNormal);
+                    break;
+                case "8":
+                    trySetPriority(pid, ProcessPriorityClass.Normal);
+                    break;
+                case "10":
+                    trySetPriority(pid, ProcessPriorityClass.AboveNormal);
+                    break;
+                case "13":
+                    trySetPriority(pid, ProcessPriorityClass.High);
+                    break;
+                case "24":
+                    trySetPriority(pid, ProcessPriorityClass.RealTime);
+                    break;
+
+            }
         }
     }
 }

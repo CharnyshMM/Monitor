@@ -10,6 +10,7 @@
         Title="Monitor" Height="450" Width="800">
 
 	<Window.Resources>
+		<ImageBrush x:Key="AddButtonImageBrush" ImageSource="pack://siteoforigin:,,,/Images/camera32.png" Stretch="UniformToFill"/>
 
 		<SolidColorBrush x:Key="brushWatermarkBackground" Color="White" />
 		<SolidColorBrush x:Key="brushWatermarkForeground" Color="LightSteelBlue" />
@@ -19,6 +20,7 @@
 		<utils:TextInputToVisibilityConverter x:Key="TextInputToVisibilityConverter" />
 		<utils:BytesToHumanReadableStrConverter x:Key="BytesToHumanReadableStrConverter" />
 		<utils:ProcessBasePriorityToStringConverter x:Key="ProcessBasePriorityToStringConverter" />
+		<utils:BasePriorityToComboBoxIndexConverter x:Key="BasePriorityToComboBoxIndexConverter" />
 
 		<Style x:Key="EntryFieldStyle" TargetType="Grid" >
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -48,9 +50,9 @@
 
 					<!--The grid below is a serch field with custom placeholder implementation from here (https://www.codeproject.com/Articles/26977/A-WatermarkTextBox-in-lines-of-XAML)-->
 					<Grid Grid.Row="0" Grid.Column="0">
-						<TextBlock Margin="6,7"  Text="Start typing process name" Foreground="{StaticResource brushWatermarkForeground}"
+						<TextBlock Height="20"  Text="Start typing process name" Foreground="{StaticResource brushWatermarkForeground}"
 									   Visibility="{Binding ElementName=txtUserEntry, Path=Text.IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
-						<TextBox Margin="5,7" Name="txtUserEntry" Background="Transparent" BorderBrush="{StaticResource brushWatermarkBorder}" Text="{Binding ProcessNameTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+						<TextBox Height="20" Name="txtUserEntry" Background="Transparent" BorderBrush="{StaticResource brushWatermarkBorder}" Text="{Binding ProcessNameTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 					</Grid>
 
 					<Grid Grid.Row="0" Grid.Column="3">
@@ -58,33 +60,67 @@
 							<ColumnDefinition Width="1*" />
 							<ColumnDefinition Width="1*" />
 						</Grid.ColumnDefinitions>
-						<Label Grid.Column="0" Content="Count:" Height="24" HorizontalAlignment="Left" Name="BaseLabel" VerticalAlignment="Top" />
-						<TextBlock Grid.Column="1" HorizontalAlignment="Left" Height="22"  DataContext="{Binding ProcessDictionary}" Text="{Binding Count}" TextAlignment="Left"/>
+						<Label Grid.Column="0" Content="Count:" Height="24" HorizontalAlignment="Left" Name="BaseLabel" VerticalAlignment="Top" 
+							   ToolTip="Count of listed processes"/>
+						<TextBlock Grid.Column="1" HorizontalAlignment="Left" Height="22"  DataContext="{Binding ProcessDictionary}" Text="{Binding Count}" TextAlignment="Left"
+								   ToolTip="Count of listed processes"/>
 					</Grid>
+					
 					<ListView Grid.Row="1" Grid.ColumnSpan="3" ItemsSource="{Binding ProcessDictionary}" SelectedItem="{Binding SelectedProcess}">
 						<ListView.View>
 							<GridView x:Name="ProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
 								<GridViewColumn Header="PID" Width="60" DisplayMemberBinding="{Binding Path=Key}" />
-								<GridViewColumn Header="Process" Width="280" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
+								<GridViewColumn Header="Process" Width="250" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
 								<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64, Converter={StaticResource BytesToHumanReadableStrConverter}}" />
 								<GridViewColumn Header="Responding" Width="60" DisplayMemberBinding="{Binding Path=Value.Responding}" />
-								<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority, Converter={StaticResource ProcessBasePriorityToStringConverter}}" />
+								
+								<GridViewColumn Header="Priority" Width="90" >
+									<GridViewColumn.CellTemplate>
+										<ItemContainerTemplate>
+											<ComboBox Tag="{Binding Path=Key}" DropDownClosed="ComboBox_DropDownClosed" SelectedIndex="{Binding Path=Value.BasePriority, 
+												Converter={StaticResource BasePriorityToComboBoxIndexConverter}, Mode=OneWay}">
+												<ComboBox.Items>
+													<ComboBoxItem Tag="4">
+														Idle
+													</ComboBoxItem>
+													<ComboBoxItem Tag="6">
+														Below Normal
+													</ComboBoxItem>
+													<ComboBoxItem Tag="8">
+														Normal
+													</ComboBoxItem>
+													<ComboBoxItem Tag="10">
+														Above Normal
+													</ComboBoxItem>
+													<ComboBoxItem Tag="13">
+														Hign
+													</ComboBoxItem>
+													<ComboBoxItem Tag="24">
+														Realtime
+													</ComboBoxItem>
+												</ComboBox.Items>
+											</ComboBox>
+										</ItemContainerTemplate>
+									</GridViewColumn.CellTemplate>
+								</GridViewColumn>
+
 								<GridViewColumn Header="Watched" Width="50" >
 									<GridViewColumn.CellTemplate>
 										<DataTemplate>
-											<CheckBox Tag="{Binding Path=Key}" Loaded="CheckBox_Loaded" Click="CheckBox_Click" HorizontalAlignment="Center"/>
+											<CheckBox Tag="{Binding Path=Key}" Loaded="CheckBox_Loaded" Click="CheckBox_Click" HorizontalAlignment="Center"
+													  ToolTip="Check to add process to Watches list"/>
 										</DataTemplate>
 									</GridViewColumn.CellTemplate>
 								</GridViewColumn>
 								<GridViewColumn Width="50" >
 									<GridViewColumn.CellTemplate>
 										<DataTemplate>
-											<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" />
+											<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" ToolTip="Try to stop the process"/>
 										</DataTemplate>
 									</GridViewColumn.CellTemplate>
 								</GridViewColumn>
+								
 							</GridView>
-				
 						</ListView.View>
 					</ListView>
 
@@ -96,14 +132,11 @@
 						<Label Grid.Row="0" Content="RAM Usage:" HorizontalAlignment="Center"/>
 						<ProgressBar Grid.Row="1" Margin="0,9" Width="30" Orientation="Vertical" x:Name="MemoryLoad" Value="{Binding Path=MemoryLoad, Mode=OneWay}"/>
 						<TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=MemoryLoad, Mode=OneWay,StringFormat=' {0}%'}"/>
-			
-
-
 					</Grid>
 					<!--<TextBlock Grid.Row="1" Grid.Column="3" Width="30" Text="{Binding Path=MemoryLoad, Mode=OneWay}" />-->
 				</Grid>
 			</TabItem>
-			<TabItem x:Name="watchesTab">
+			<TabItem x:Name="watchesTab" ToolTip="Check 'Watch' in All Processes list to make process appear here">
 				<TabItem.Header>
 					Watches
 				</TabItem.Header>
@@ -123,9 +156,37 @@
 								<GridView x:Name="WatchedProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
 									<GridViewColumn Header="PID" Width="60" DisplayMemberBinding="{Binding Path=Key}" />
 									<GridViewColumn Header="Process" Width="200" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
-									<!--<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />-->
 									<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64, Converter={StaticResource BytesToHumanReadableStrConverter}}" />
-									<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority, Converter={StaticResource ProcessBasePriorityToStringConverter}}" />
+									<GridViewColumn Header="Priority" Width="90" >
+										<GridViewColumn.CellTemplate>
+											<ItemContainerTemplate>
+												<ComboBox Tag="{Binding Path=Key}" DropDownClosed="ComboBox_DropDownClosed" SelectedIndex="{Binding Path=Value.BasePriority, 
+												Converter={StaticResource BasePriorityToComboBoxIndexConverter}, Mode=OneWay}"
+														  ToolTip="Select and try to change process priority">
+													<ComboBox.Items>
+														<ComboBoxItem Tag="4">
+															Idle
+														</ComboBoxItem>
+														<ComboBoxItem Tag="6">
+															Below Normal
+														</ComboBoxItem>
+														<ComboBoxItem Tag="8">
+															Normal
+														</ComboBoxItem>
+														<ComboBoxItem Tag="10">
+															Above Normal
+														</ComboBoxItem>
+														<ComboBoxItem Tag="13">
+															Hign
+														</ComboBoxItem>
+														<ComboBoxItem Tag="24">
+															Realtime
+														</ComboBoxItem>
+													</ComboBox.Items>
+												</ComboBox>
+											</ItemContainerTemplate>
+										</GridViewColumn.CellTemplate>
+									</GridViewColumn>
 									<GridViewColumn Header="Responding" Width="60" DisplayMemberBinding="{Binding Path=Value.Responding}" />
 									<GridViewColumn Header="Exited" Width="70" DisplayMemberBinding="{Binding Path=Value.HasExited}" />
 									<GridViewColumn Header="ExitTime" Width="70" DisplayMemberBinding="{Binding Path=Value.ExitTime}" />
@@ -133,7 +194,7 @@
 									<GridViewColumn Width="60">
 										<GridViewColumn.CellTemplate>
 											<DataTemplate>
-												<Button Click="Remove_Click" Tag="{Binding Path=Key}">
+												<Button Click="Remove_Click" Tag="{Binding Path=Key}" ToolTip="Remove from watches list">
 													Remove
 												</Button>
 											</DataTemplate>
@@ -142,7 +203,7 @@
 									<GridViewColumn Width="50">
 										<GridViewColumn.CellTemplate>
 											<DataTemplate>
-												<Button Click="EndClick" Tag="{Binding Path=Key}">
+												<Button Click="EndClick" Tag="{Binding Path=Key}" ToolTip="Try to stop the process">
 													End
 												</Button>
 											</DataTemplate>
@@ -152,10 +213,14 @@
 							</ListView.View>
 						</ListView>
 						<StackPanel Grid.Column="1">
-							<Button Margin="3,2" Click="Snapshot_Click">
-								Snap!
-							</Button>
-							<Button Margin="5,2" Click="Settings_Click">
+							<Button Margin="3,2" Click="Snapshot_Click" 
+									Content="Snapshot!"
+									
+									FontWeight="Bold"
+									ToolTip="Save log of current watches state to file"
+									/>
+
+							<Button Margin="3,2" Click="Settings_Click">
 								Settings
 							</Button>
 						</StackPanel>
