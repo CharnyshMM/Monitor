@@ -1,0 +1,31 @@
+﻿<Window x:Class="Monitor.ChildWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:Monitor"
+		xmlns:utils="clr-namespace:Monitor.Utilities"
+		xmlns:props="clr-namespace:Monitor.Properties"
+        mc:Ignorable="d"
+        Title="Settings" Height="200" Width="300">
+    <Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="0.5*" />
+			<RowDefinition Height="0.5*" />
+			<RowDefinition Height="0.5*" />
+			<RowDefinition Height="1*" />
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="0.5*" />
+			<ColumnDefinition Width="1.2*" />
+		</Grid.ColumnDefinitions>
+		<TextBlock Grid.Row="1" Grid.Column="0" Text="Snapshots Saving Path:" TextAlignment="Right" TextWrapping="Wrap"/>
+		<TextBox Grid.Row="1" Grid.Column="1" Margin="5,7" Text="{Binding Source={x:Static props:Settings.Default}, 
+									Path=SnapshotsPath, Mode=TwoWay}" MouseDoubleClick="SnapshotsPathTextBox_MouseDoubleClick" />
+
+		<CheckBox Margin="5,5" Grid.Row="2" Grid.Column="1" Padding="3" Content="Human Readable Memory" IsChecked="{Binding Source={x:Static props:Settings.Default}, 
+									Path=HumanReadableMemory, Mode=TwoWay}"></CheckBox>
+		
+		
+    </Grid>
+</Window>

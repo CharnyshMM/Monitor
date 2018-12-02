@@ -10,6 +10,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Management;
 using System.Windows.Input;
+using System.Runtime.InteropServices;
+
 using Monitor.Utilities;
 using DrWPF.Windows.Data;
 
@@ -23,6 +25,7 @@ namespace Monitor.ViewModels
             {
                 var p1 = x.Value as Process;
                 var p2 = y.Value as Process;
+               
                 if (p1 is null || p2 is null)
                     return 0;
 
@@ -38,6 +41,8 @@ namespace Monitor.ViewModels
             }
         }
 
+        
+
         public static bool CompareProcesses(Process x, Process y)
         {
             if (x.Id != y.Id)
@@ -51,6 +56,7 @@ namespace Monitor.ViewModels
                 return false;
             if (x.Responding != y.Responding)
                 return false;
+            
             return true;
         }
 
@@ -60,11 +66,34 @@ namespace Monitor.ViewModels
             
         }
 
+        protected long _memoryLoad = 0;
+        public long MemoryLoad
+        {
+            get => _memoryLoad;
+        }
+
+       
+        protected string _processNameTemplate = "";
+        public string ProcessNameTemplate
+        {
+            get => _processNameTemplate;
+            set
+            {
+                _processNameTemplate = value.Trim().ToLowerInvariant();
+            }
+        }
+
         protected ObservableSortedDictionary<int, Process> _processDictionary;
         protected Dictionary<int, bool> _processUpdateDiff;
         protected bool isAliveFlag = true;
        
-        public ObservableSortedDictionary<int, Process> ProcessDictionary { get => _processDictionary; }
+        public ObservableSortedDictionary<int, Process> ProcessDictionary
+        {
+            get
+            {
+                return _processDictionary;
+            }
+        }
 
         protected Process _selectedProcess;
 
@@ -85,17 +114,7 @@ namespace Monitor.ViewModels
             process?.Kill();
         }
 
-        protected ExtendedCommand _endProcess;
-
-        public ExtendedCommand EndProcess
-        {
-            get
-            {
-                if (_endProcess is null)
-                   _endProcess = new ExtendedCommand(EndProcessCommandHandler, null);
-                return _endProcess;
-            }
-        }
+       
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -106,8 +125,10 @@ namespace Monitor.ViewModels
 
         
         public void Update()
-        {       
+        {
             var update = Process.GetProcesses();
+            
+            UpdateMemoryLoad();
 
             if (_processDictionary is null)
             {
@@ -116,8 +137,11 @@ namespace Monitor.ViewModels
                 
                 foreach (var p in update)
                 {
-                    _processDictionary.Add(p.Id, p);
-                    _processUpdateDiff.Add(p.Id, true);
+                    if (ProcessNameTemplateCheck(p.ProcessName))
+                    {
+                        _processDictionary.Add(p.Id, p);
+                        _processUpdateDiff.Add(p.Id, true);
+                    }
                 }
                 return;
             }
@@ -125,25 +149,35 @@ namespace Monitor.ViewModels
             isAliveFlag = !isAliveFlag;
             foreach (var newProcessRecord in update)
             {
-                if (_processDictionary.ContainsKey(newProcessRecord.Id))
+                if (ProcessNameTemplateCheck(newProcessRecord.ProcessName))
                 {
-                    var oldProcessRecord = _processDictionary[newProcessRecord.Id];
-                    _processUpdateDiff[oldProcessRecord.Id] = isAliveFlag;
-                    if (!CompareProcesses(oldProcessRecord, newProcessRecord))
+                    if (_processDictionary.ContainsKey(newProcessRecord.Id))
                     {
+                        var oldProcessRecord = _processDictionary[newProcessRecord.Id];
+                        _processUpdateDiff[newProcessRecord.Id] = isAliveFlag;
+                        if (!CompareProcesses(oldProcessRecord, newProcessRecord))
+                        {
+                            System.Windows.Application.Current.Dispatcher.Invoke(delegate
+                            {
+                                _processDictionary[newProcessRecord.Id] = newProcessRecord;// = newProcessRecord;
+                            });
+                        }
+                    }
+                    else
+                    {
+                        _processUpdateDiff[newProcessRecord.Id] = isAliveFlag;
                         System.Windows.Application.Current.Dispatcher.Invoke(delegate
                         {
-                            _processDictionary[newProcessRecord.Id] = newProcessRecord;
+                            try
+                            {
+                                _processDictionary.Add(newProcessRecord.Id, newProcessRecord);
+                            }
+                            catch (ArgumentException e)
+                            {
+                                var d = e.Data;
+                            }
                         });
                     }
-                }
-                else
-                {
-                    _processUpdateDiff[newProcessRecord.Id] = isAliveFlag;
-                    System.Windows.Application.Current.Dispatcher.Invoke(delegate
-                    {
-                        _processDictionary.Add(newProcessRecord.Id, newProcessRecord);
-                    });
                 }
             }
 
@@ -160,13 +194,29 @@ namespace Monitor.ViewModels
                 }
             }
 
-            
-
-            //OnPropertyChanged("ProcessDictionary");
             OnPropertyChanged("Count");
         }
 
-        
+        public void UpdateWatches()
+        {
+
+        }
+
+        protected bool ProcessNameTemplateCheck(string processName)
+        {
+            if (_processNameTemplate.Length == 0)
+                return true;
+            return processName.ToLowerInvariant().StartsWith(_processNameTemplate);
+        }
+
+        protected void UpdateMemoryLoad()
+        {
+            decimal phav = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
+            decimal tot = PerformanceInfo.GetTotalMemoryInMiB();
+            decimal percentFree = ((decimal)phav / (decimal)tot) * 100;
+            _memoryLoad = (int)(100m - percentFree);
+            OnPropertyChanged("MemoryLoad");
+        }
 
         public void OnPropertyChanged([CallerMemberName]string prop = "")
         {

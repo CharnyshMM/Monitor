@@ -4,35 +4,172 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Monitor"
+		xmlns:utils="clr-namespace:Monitor.Utilities"
+		xmlns:props="clr-namespace:Monitor.Properties"
         mc:Ignorable="d"
         Title="Monitor" Height="450" Width="800">
-    <Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="0.1*" ></RowDefinition>
-			<RowDefinition Height="1*"></RowDefinition>
-		</Grid.RowDefinitions>
-		<TextBlock Grid.Row="0" HorizontalAlignment="Left" Height="50" Width="200" DataContext="{Binding ProcessDictionary}" Text="{Binding Count}" TextAlignment="Left"/>
-		
-		<ListView Grid.Row="1" ItemsSource="{Binding ProcessDictionary}" SelectedItem="{Binding SelectedProcess}">
-			<ListView.View>
-				<GridView x:Name="ProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
-					<GridViewColumn Header="PID" Width="70" DisplayMemberBinding="{Binding Path=Key}" />
-					<GridViewColumn Header="Process" Width="300" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
-					<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
-					<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
-					<GridViewColumn Header="Networking" Width="70" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
-					<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority}" />
-					<GridViewColumn Width="70" >
-						<GridViewColumn.CellTemplate>
-							<DataTemplate>
-								<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" />
-							</DataTemplate>
-						</GridViewColumn.CellTemplate>
-					</GridViewColumn>
-				</GridView>
-				
-			</ListView.View>
-		</ListView>
 
+	<Window.Resources>
+
+		<SolidColorBrush x:Key="brushWatermarkBackground" Color="White" />
+		<SolidColorBrush x:Key="brushWatermarkForeground" Color="LightSteelBlue" />
+		<SolidColorBrush x:Key="brushWatermarkBorder" Color="Indigo" />
+
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+		<utils:TextInputToVisibilityConverter x:Key="TextInputToVisibilityConverter" />
+		<utils:BytesToHumanReadableStrConverter x:Key="BytesToHumanReadableStrConverter" />
+		<utils:ProcessBasePriorityToStringConverter x:Key="ProcessBasePriorityToStringConverter" />
+
+		<Style x:Key="EntryFieldStyle" TargetType="Grid" >
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Margin" Value="20,0" />
+		</Style>
+
+	</Window.Resources>
+
+	<Grid>
+		<TabControl SelectionChanged="TabControl_SelectionChanged">
+			<TabItem x:Name="allProcessesTab">
+				<TabItem.Header>
+					All Processes
+				</TabItem.Header>
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="0.1*" ></RowDefinition>
+						<RowDefinition Height="1.2*"></RowDefinition>
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="1*" />
+						<ColumnDefinition Width="1*" />
+						<ColumnDefinition Width="1*" />
+						<ColumnDefinition Width="0.5*" />
+					</Grid.ColumnDefinitions>
+
+					<!--The grid below is a serch field with custom placeholder implementation from here (https://www.codeproject.com/Articles/26977/A-WatermarkTextBox-in-lines-of-XAML)-->
+					<Grid Grid.Row="0" Grid.Column="0">
+						<TextBlock Margin="6,7"  Text="Start typing process name" Foreground="{StaticResource brushWatermarkForeground}"
+									   Visibility="{Binding ElementName=txtUserEntry, Path=Text.IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+						<TextBox Margin="5,7" Name="txtUserEntry" Background="Transparent" BorderBrush="{StaticResource brushWatermarkBorder}" Text="{Binding ProcessNameTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+					</Grid>
+
+					<Grid Grid.Row="0" Grid.Column="3">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="1*" />
+							<ColumnDefinition Width="1*" />
+						</Grid.ColumnDefinitions>
+						<Label Grid.Column="0" Content="Count:" Height="24" HorizontalAlignment="Left" Name="BaseLabel" VerticalAlignment="Top" />
+						<TextBlock Grid.Column="1" HorizontalAlignment="Left" Height="22"  DataContext="{Binding ProcessDictionary}" Text="{Binding Count}" TextAlignment="Left"/>
+					</Grid>
+					<ListView Grid.Row="1" Grid.ColumnSpan="3" ItemsSource="{Binding ProcessDictionary}" SelectedItem="{Binding SelectedProcess}">
+						<ListView.View>
+							<GridView x:Name="ProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
+								<GridViewColumn Header="PID" Width="60" DisplayMemberBinding="{Binding Path=Key}" />
+								<GridViewColumn Header="Process" Width="280" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
+								<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64, Converter={StaticResource BytesToHumanReadableStrConverter}}" />
+								<GridViewColumn Header="Responding" Width="60" DisplayMemberBinding="{Binding Path=Value.Responding}" />
+								<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority, Converter={StaticResource ProcessBasePriorityToStringConverter}}" />
+								<GridViewColumn Header="Watched" Width="70" >
+									<GridViewColumn.CellTemplate>
+										<DataTemplate>
+											<CheckBox Tag="{Binding Path=Key}" Loaded="CheckBox_Loaded" Click="CheckBox_Click">
+												<CheckBox.Content>
+													Watch
+												</CheckBox.Content>
+											</CheckBox>
+										</DataTemplate>
+									</GridViewColumn.CellTemplate>
+								</GridViewColumn>
+								<GridViewColumn Width="70" >
+									<GridViewColumn.CellTemplate>
+										<DataTemplate>
+											<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" />
+										</DataTemplate>
+									</GridViewColumn.CellTemplate>
+								</GridViewColumn>
+							</GridView>
+				
+						</ListView.View>
+					</ListView>
+
+					<Grid  Grid.Row="1" Grid.Column="3">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="0.1*" />
+							<RowDefinition Height="1.2*" />
+						</Grid.RowDefinitions>
+						<Label Grid.Row="0" Content="Memory Usage:" HorizontalAlignment="Center"/>
+						<ProgressBar Grid.Row="1" Margin="0,9" Width="30" Orientation="Vertical" x:Name="MemoryLoad" Value="{Binding Path=MemoryLoad, Mode=OneWay}"/>
+						<TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=MemoryLoad, Mode=OneWay,StringFormat=' {0}%'}"/>
+			
+
+
+					</Grid>
+					<!--<TextBlock Grid.Row="1" Grid.Column="3" Width="30" Text="{Binding Path=MemoryLoad, Mode=OneWay}" />-->
+				</Grid>
+			</TabItem>
+			<TabItem x:Name="watchesTab">
+				<TabItem.Header>
+					Watches
+				</TabItem.Header>
+				<Grid>
+					<Grid.RowDefinitions>
+						<!--<RowDefinition Height="0.1*" />-->
+						<RowDefinition Height="1*" />
+						<RowDefinition Height="0.05*" />
+					</Grid.RowDefinitions>
+					<Grid Grid.Row="0">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="1*" />
+							<ColumnDefinition Width="0.1*" />
+						</Grid.ColumnDefinitions>
+						<ListView Grid.Column="0" ItemsSource="{Binding ProcessDictionary}" SelectedItem="{Binding SelectedProcess}">
+							<ListView.View>
+								<GridView x:Name="WatchedProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
+									<GridViewColumn Header="PID" Width="60" DisplayMemberBinding="{Binding Path=Key}" />
+									<GridViewColumn Header="Process" Width="200" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
+									<!--<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />-->
+									<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64, Converter={StaticResource BytesToHumanReadableStrConverter}}" />
+									<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority, Converter={StaticResource ProcessBasePriorityToStringConverter}}" />
+									<GridViewColumn Header="Responding" Width="60" DisplayMemberBinding="{Binding Path=Value.Responding}" />
+									<GridViewColumn Header="Exited" Width="70" DisplayMemberBinding="{Binding Path=Value.HasExited}" />
+									<GridViewColumn Header="ExitTime" Width="70" DisplayMemberBinding="{Binding Path=Value.ExitTime}" />
+									<GridViewColumn Header="Exit Code" Width="70" DisplayMemberBinding="{Binding Path=Value.ExitCode}" />
+									<GridViewColumn Width="60">
+										<GridViewColumn.CellTemplate>
+											<DataTemplate>
+												<Button Click="Remove_Click" Tag="{Binding Path=Key}">
+													Remove
+												</Button>
+											</DataTemplate>
+										</GridViewColumn.CellTemplate>
+									</GridViewColumn>
+									<GridViewColumn Width="60">
+										<GridViewColumn.CellTemplate>
+											<DataTemplate>
+												<Button Click="EndClick" Tag="{Binding Path=Key}">
+													End
+												</Button>
+											</DataTemplate>
+										</GridViewColumn.CellTemplate>
+									</GridViewColumn>
+								</GridView>
+							</ListView.View>
+						</ListView>
+						<StackPanel Grid.Column="1">
+							<Button Margin="3,2" Click="Snapshot_Click">
+								Snap!
+							</Button>
+							<Button Margin="5,2" Click="Settings_Click">
+								Settings
+							</Button>
+						</StackPanel>
+						
+					</Grid>
+					<TextBlock Grid.Row="1" Text="{Binding Source={x:Static props:Settings.Default}, 
+									Path=SnapshotsPath, Mode=TwoWay, StringFormat='Snapshots file: {0}'}" />
+				</Grid>
+			</TabItem>
+		</TabControl>
 	</Grid>
+
 </Window>

@@ -56,10 +56,22 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ChildWindow.xaml.cs">
+      <DependentUpon>ChildWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ObservableDictionary.cs" />
     <Compile Include="ObservableSortedDictionary.cs" />
-    <Compile Include="Utilities\ExtendedCommand.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Utilities\BytesToHumanReadableStrConverter.cs" />
+    <Compile Include="Utilities\PerformanceInfo.cs" />
+    <Compile Include="Utilities\ProcessBasePriorityToStringConverter.cs" />
+    <Compile Include="Utilities\TextInputToVisibilityConverter.cs" />
     <Compile Include="ViewModels\ProcessesViewModel.cs" />
+    <Compile Include="ViewModels\ProcessWatchesViewModel.cs" />
+    <Page Include="ChildWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
