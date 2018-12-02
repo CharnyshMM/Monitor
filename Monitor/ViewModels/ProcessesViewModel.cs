@@ -11,24 +11,30 @@ using System.Threading.Tasks;
 using System.Management;
 using System.Windows.Input;
 using Monitor.Utilities;
+using DrWPF.Windows.Data;
 
 namespace Monitor.ViewModels
 {
     class ProcessesViewModel : INotifyPropertyChanged
     {
-        class ProcessPIDComparer : IEqualityComparer<Process>
+        class ProcessDictEntryComparer : IComparer<DictionaryEntry>
         {
-            public bool Equals(Process x, Process y)
+            public int Compare(DictionaryEntry x, DictionaryEntry y)
             {
-                if (x == null && y == null) return true;
-                if (x == null || y == null) return false;
-                return x.Id == y.Id;
-   
-            }
+                var p1 = x.Value as Process;
+                var p2 = y.Value as Process;
+                if (p1 is null || p2 is null)
+                    return 0;
 
-            public int GetHashCode(Process obj)
-            {
-                return obj?.Id.GetHashCode() ?? 0;
+                int comparisonResult = p1.ProcessName.CompareTo(p2.ProcessName);
+                if (comparisonResult != 0)
+                    return comparisonResult;
+                comparisonResult = p1.Id.CompareTo(p2.Id); 
+                if (comparisonResult != 0)
+                    return comparisonResult;
+                comparisonResult = p1.PrivateMemorySize64.CompareTo(p2.PrivateMemorySize64);
+                return comparisonResult;
+                
             }
         }
 
@@ -36,7 +42,9 @@ namespace Monitor.ViewModels
         {
             if (x.Id != y.Id)
                 return false;
-            
+            if (x.ProcessName != y.ProcessName)
+                return false;
+
             if (x.BasePriority != y.BasePriority)
                 return false;
             if (x.PrivateMemorySize64 != y.PrivateMemorySize64)
@@ -46,9 +54,17 @@ namespace Monitor.ViewModels
             return true;
         }
 
-        protected ObservableCollection<Process> _processObservableCollection;
-        protected Dictionary<long, Process> _processDictionary;
-        public ObservableCollection<Process> ProcessList { get => _processObservableCollection; }
+        public int Count
+        {
+            get => _processDictionary.Count();
+            
+        }
+
+        protected ObservableSortedDictionary<int, Process> _processDictionary;
+        protected Dictionary<int, bool> _processUpdateDiff;
+        protected bool isAliveFlag = true;
+       
+        public ObservableSortedDictionary<int, Process> ProcessDictionary { get => _processDictionary; }
 
         protected Process _selectedProcess;
 
@@ -93,45 +109,61 @@ namespace Monitor.ViewModels
         {       
             var update = Process.GetProcesses();
 
-            if (_processObservableCollection is null)
+            if (_processDictionary is null)
             {
-                _processDictionary = new Dictionary<long, Process>();
+                _processDictionary = new ObservableSortedDictionary<int, Process>(new ProcessDictEntryComparer());
+                _processUpdateDiff = new Dictionary<int, bool>();
                 
                 foreach (var p in update)
                 {
                     _processDictionary.Add(p.Id, p);
+                    _processUpdateDiff.Add(p.Id, true);
                 }
-                _processObservableCollection = new ObservableCollection<Process>(_processDictionary.Values);
                 return;
             }
 
+            isAliveFlag = !isAliveFlag;
             foreach (var newProcessRecord in update)
             {
                 if (_processDictionary.ContainsKey(newProcessRecord.Id))
                 {
                     var oldProcessRecord = _processDictionary[newProcessRecord.Id];
-                    
+                    _processUpdateDiff[oldProcessRecord.Id] = isAliveFlag;
                     if (!CompareProcesses(oldProcessRecord, newProcessRecord))
                     {
-                        oldProcessRecord = _processObservableCollection.Single(p => p.Id == oldProcessRecord.Id);
-                        int index = _processObservableCollection.IndexOf(oldProcessRecord);
                         System.Windows.Application.Current.Dispatcher.Invoke(delegate
                         {
-                            _processObservableCollection[index] = newProcessRecord;
+                            _processDictionary[newProcessRecord.Id] = newProcessRecord;
                         });
                     }
                 }
                 else
                 {
+                    _processUpdateDiff[newProcessRecord.Id] = isAliveFlag;
                     System.Windows.Application.Current.Dispatcher.Invoke(delegate
                     {
-                        _processObservableCollection.Add(newProcessRecord);
+                        _processDictionary.Add(newProcessRecord.Id, newProcessRecord);
                     });
                 }
-
             }
+
+            var endedProcesses = _processUpdateDiff.Where(pair => pair.Value != isAliveFlag).ToList();
+            foreach (KeyValuePair<int, bool> entry in endedProcesses)
+            {
+                if (entry.Value != isAliveFlag)
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(delegate
+                    {
+                        _processDictionary.Remove(entry.Key);
+                    });
+                    _processUpdateDiff.Remove(entry.Key);
+                }
+            }
+
             
-            OnPropertyChanged("ProcessList");
+
+            //OnPropertyChanged("ProcessDictionary");
+            OnPropertyChanged("Count");
         }
 
         

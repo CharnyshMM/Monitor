@@ -7,20 +7,25 @@
         mc:Ignorable="d"
         Title="Monitor" Height="450" Width="800">
     <Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="0.1*" ></RowDefinition>
+			<RowDefinition Height="1*"></RowDefinition>
+		</Grid.RowDefinitions>
+		<TextBlock Grid.Row="0" HorizontalAlignment="Left" Height="50" Width="200" DataContext="{Binding ProcessDictionary}" Text="{Binding Count}" TextAlignment="Left"/>
 		
-		<ListView ItemsSource="{Binding ProcessList}" SelectedItem="{Binding SelectedProcess}">
+		<ListView Grid.Row="1" ItemsSource="{Binding ProcessDictionary}" SelectedItem="{Binding SelectedProcess}">
 			<ListView.View>
 				<GridView x:Name="ProcessesList" AllowsColumnReorder="true" ColumnHeaderToolTip="ProcessList">
-					<GridViewColumn Header="PID" Width="70" DisplayMemberBinding="{Binding Path=Id}" />
-					<GridViewColumn Header="Process" Width="300" DisplayMemberBinding="{Binding Path=ProcessName}" />
-					<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
-					<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
-					<GridViewColumn Header="Networking" Width="70" DisplayMemberBinding="{Binding Path=PrivateMemorySize64}" />
-					<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=BasePriority}" />
+					<GridViewColumn Header="PID" Width="70" DisplayMemberBinding="{Binding Path=Key}" />
+					<GridViewColumn Header="Process" Width="300" DisplayMemberBinding="{Binding Path=Value.ProcessName}" />
+					<GridViewColumn Header="CPU %" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
+					<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
+					<GridViewColumn Header="Networking" Width="70" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64}" />
+					<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority}" />
 					<GridViewColumn Width="70" >
 						<GridViewColumn.CellTemplate>
 							<DataTemplate>
-								<Button Content="End" Click="EndClick" Tag="{Binding Path=Id}" />
+								<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" />
 							</DataTemplate>
 						</GridViewColumn.CellTemplate>
 					</GridViewColumn>

@@ -50,6 +50,7 @@ namespace Monitor
             int id = (int) button.Tag;
             try
             {
+                
                 Process.GetProcessById(id).Kill();
                 ProcessesViewModel.Update();
                 
