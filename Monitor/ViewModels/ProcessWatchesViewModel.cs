@@ -14,14 +14,6 @@ namespace Monitor.ViewModels
 {
     class ProcessWatchesViewModel : INotifyPropertyChanged
     {
-        protected event Action<IDictionary> _updatedAction;
-        public event Action<IDictionary> UpdateAction
-        {
-            add => _updatedAction += value;
-            remove => _updatedAction -= value;
-        }
-
-
         protected ObservableDictionary<int, Process> _processDictionary;
         public ObservableDictionary<int, Process> ProcessDictionary
         {
@@ -78,8 +70,10 @@ namespace Monitor.ViewModels
         public void AddProcessToWatch(int id)
         {
             var process = Process.GetProcessById(id);
+            
             process.EnableRaisingEvents = true;
             process.Exited += OnProcessExited;
+            
             AddProcessToWatch(process);
         }
 

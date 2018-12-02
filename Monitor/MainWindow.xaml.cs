@@ -25,10 +25,6 @@ namespace Monitor
     /// </summary>
     public partial class MainWindow : Window
     {
-
-        public static string[] Priority = { "Idle4", "Normal8", "High13", "Realtime24" };
-
-
         ProcessesViewModel ProcessesViewModel;
         ProcessWatchesViewModel ProcessWatchesViewModel;
         Timer Timer;

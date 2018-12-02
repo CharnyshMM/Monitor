@@ -69,18 +69,14 @@
 								<GridViewColumn Header="Memory" Width="60" DisplayMemberBinding="{Binding Path=Value.PrivateMemorySize64, Converter={StaticResource BytesToHumanReadableStrConverter}}" />
 								<GridViewColumn Header="Responding" Width="60" DisplayMemberBinding="{Binding Path=Value.Responding}" />
 								<GridViewColumn Header="Priority" Width="70" DisplayMemberBinding="{Binding Path=Value.BasePriority, Converter={StaticResource ProcessBasePriorityToStringConverter}}" />
-								<GridViewColumn Header="Watched" Width="70" >
+								<GridViewColumn Header="Watched" Width="50" >
 									<GridViewColumn.CellTemplate>
 										<DataTemplate>
-											<CheckBox Tag="{Binding Path=Key}" Loaded="CheckBox_Loaded" Click="CheckBox_Click">
-												<CheckBox.Content>
-													Watch
-												</CheckBox.Content>
-											</CheckBox>
+											<CheckBox Tag="{Binding Path=Key}" Loaded="CheckBox_Loaded" Click="CheckBox_Click" HorizontalAlignment="Center"/>
 										</DataTemplate>
 									</GridViewColumn.CellTemplate>
 								</GridViewColumn>
-								<GridViewColumn Width="70" >
+								<GridViewColumn Width="50" >
 									<GridViewColumn.CellTemplate>
 										<DataTemplate>
 											<Button Content="End" Click="EndClick" Tag="{Binding Path=Key}" />
@@ -97,7 +93,7 @@
 							<RowDefinition Height="0.1*" />
 							<RowDefinition Height="1.2*" />
 						</Grid.RowDefinitions>
-						<Label Grid.Row="0" Content="Memory Usage:" HorizontalAlignment="Center"/>
+						<Label Grid.Row="0" Content="RAM Usage:" HorizontalAlignment="Center"/>
 						<ProgressBar Grid.Row="1" Margin="0,9" Width="30" Orientation="Vertical" x:Name="MemoryLoad" Value="{Binding Path=MemoryLoad, Mode=OneWay}"/>
 						<TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=MemoryLoad, Mode=OneWay,StringFormat=' {0}%'}"/>
 			
@@ -143,7 +139,7 @@
 											</DataTemplate>
 										</GridViewColumn.CellTemplate>
 									</GridViewColumn>
-									<GridViewColumn Width="60">
+									<GridViewColumn Width="50">
 										<GridViewColumn.CellTemplate>
 											<DataTemplate>
 												<Button Click="EndClick" Tag="{Binding Path=Key}">
